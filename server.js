@@ -24,7 +24,7 @@ function getTitleOfAddress(url) {
 function scrapeTitle(body) {
     const $ = cheerio.load(body);
     const title = $('title').html();
-    return `<li>${title}</li>`;
+    return `${title}`;
 }
 
 function validity(urls) {
@@ -46,64 +46,34 @@ app.get('/', (req, res) => {
 app.get('/I/want/title', async (req, res) => {
     const { address } = req.query;
 
+    let all = [];
     //check for url validity
     if(Array.isArray(address)) {
         const validatedURLS = validity(address);
 
         const allThePromises = validatedURLS.map(url => url.isValid ? getTitleOfAddress(url.url) : new Promise((resolve, reject) => reject('Invalid URL')));
         Promise.allSettled(allThePromises).then(titles => {
-            // console.log(titles[0].value.data)
-            titles.map(each => {
-                if(each.status === 'fulfilled') {
-                let dump = [];
-                dump.push(each.value.data);
+            res.send(`
+                <html>
+                <head></head>
+                <body>
+                    <h1> Following are the titles of given websites: </h1>
 
-                let all = [];
-                for(let i=0; i<dump.length; i++) {
-                    let each = dump[i];
-                    all.push(scrapeTitle(each));
-                }
-
-                console.log(all)
-
-                // res.send(`
-                //     <html>
-                //     <head></head>
-                //     <body>
-                //         <h1> Following are the titles of given websites: </h1>
-
-                //         <ul>
-                //             ${tb.map(title => (
-                //                 `<li>${title}</li>`
-                //             ))}
-                //         </ul>
-                //     </body>
-                //     </html>
-                // `)
-                }
+                    <ul>
+                        ${titles.map(each => {
+                            if(each.status === 'fulfilled') {
+                                let iTitle = scrapeTitle(each.value.data);
+                                return `<li> ${each.value.config.url} - ${iTitle}</li>`
+                            } else {
+                                return `<li>Invalid URL - NO RESPONSE</li>`
+                            }
+                        })}                        
+                    </ul>
+                </body>
+                </html>
+            `)
             })
-            const tt = scrapeTitle(titles[0].value.data);
-        });
     }
-    //  else {
-    //     getTitleOfAddress(address);
-    // }
-
-    // res.send(`
-    //     <html>
-    //     <head></head>
-    //     <body>
-    //         <h1> Following are the titles of given websites: </h1>
-
-    //         <ul>
-    //             ${titles?.map(title => (
-    //                 `<li>${title}</li>`
-    //             ))}
-    //         </ul>
-    //     </body>
-    //     </html>
-    // `)
-
 
 });
 
@@ -114,40 +84,3 @@ app.get('*', (req, res) => {
 });
 
 app.listen(3000, () => console.log('Server has started'));
-
-
-
-
-
-
-
-
-// if(Array.isArray(address)) {
-//     res.send(`
-//     <html>
-//     <head></head>
-//     <body>
-//         <h1> Following are the titles of given websites: </h1>
-
-//         <ul>
-//             ${address.map(eachAddress => (
-//                 `<li>${eachAddress}</li>`
-//             ))}
-//         </ul>
-//     </body>
-//     </html>
-//     `)
-// } else {
-//     res.send(`
-//     <html>
-//     <head></head>
-//     <body>
-//         <h1> Following are the titles of given websites: </h1>
-
-//         <ul>
-//             <li>${address}</li>
-//         </ul>
-//     </body>
-//     </html>
-//     `)
-// }
