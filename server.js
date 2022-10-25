@@ -32,9 +32,22 @@ function validity(urls) {
         if (validUrl.isUri(url)){
             return { url, isValid: true }
         }
-        
         return { url, isValid: false }
     });
+}
+
+function sendResponseHTML(url, title) {
+    return `
+        <html>
+        <head></head>
+        <body>
+            <h1> Following are the titles of given websites: </h1>
+    
+            <ul>
+            <li>${url} - ${title}</li>
+            </ul>
+        </body>
+        </html>`
 }
 
 // apis
@@ -72,7 +85,18 @@ app.get('/I/want/title', async (req, res) => {
                 </body>
                 </html>
             `)
+        })
+    } else {
+        if(validUrl.isUri(address)) {
+            getTitleOfAddress(address)
+            .then(data => {
+                const iTitle = scrapeTitle(data.data);
+                const url = data.config.url;
+                res.send(sendResponseHTML(url, iTitle))
             })
+        } else {
+            res.send('Invalid URL - NO RESPONSE');
+        }
     }
 
 });
