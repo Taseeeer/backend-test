@@ -1,110 +1,41 @@
-const express = require('express');
-const morgan = require('morgan');
-const axios = require('axios');
-const cheerio = require('cheerio');
-const validUrl = require('valid-url');
+const rxjs = require("rxjs");
 
-
-const app = express();
-
-app.use(morgan('dev'));
-
-// funciton
-
-function getTitleOfAddress(url) {
-    return axios.request({
-        method: "GET",
-        headers: {
-            'Content-Type': 'text/plain'
-        },
-        url: url
-    });
-}
-
-function scrapeTitle(body) {
-    const $ = cheerio.load(body);
-    const title = $('title').html();
-    return `${title}`;
-}
-
-function validity(urls) {
-    return urls.map(url => {
-        if (validUrl.isUri(url)){
-            return { url, isValid: true }
-        }
-        return { url, isValid: false }
-    });
-}
-
-function sendResponseHTML(url, title) {
-    return `
-        <html>
-        <head></head>
-        <body>
-            <h1> Following are the titles of given websites: </h1>
-    
-            <ul>
-            <li>${url} - ${title}</li>
-            </ul>
-        </body>
-        </html>`
-}
-
-// apis
-
-app.get('/', (req, res) => {
-    res.send('Home');
+const myPromise1 = new Promise((resolve, reject) => {
+    setTimeout(() => {
+        console.log("I am resolved - 1");
+    }, 1000);
 });
 
-app.get('/I/want/title', async (req, res) => {
-    const { address } = req.query;
-
-    let all = [];
-    //check for url validity
-    if(Array.isArray(address)) {
-        const validatedURLS = validity(address);
-
-        const allThePromises = validatedURLS.map(url => url.isValid ? getTitleOfAddress(url.url) : new Promise((resolve, reject) => reject('Invalid URL')));
-        Promise.allSettled(allThePromises).then(titles => {
-            res.send(`
-                <html>
-                <head></head>
-                <body>
-                    <h1> Following are the titles of given websites: </h1>
-
-                    <ul>
-                        ${titles.map(each => {
-                            if(each.status === 'fulfilled') {
-                                let iTitle = scrapeTitle(each.value.data);
-                                return `<li> ${each.value.config.url} - ${iTitle}</li>`
-                            } else {
-                                return `<li>Invalid URL - NO RESPONSE</li>`
-                            }
-                        })}                        
-                    </ul>
-                </body>
-                </html>
-            `)
-        })
-    } else {
-        if(validUrl.isUri(address)) {
-            getTitleOfAddress(address)
-            .then(data => {
-                const iTitle = scrapeTitle(data.data);
-                const url = data.config.url;
-                res.send(sendResponseHTML(url, iTitle))
-            })
-        } else {
-            res.send('Invalid URL - NO RESPONSE');
-        }
-    }
-
+const myPromise2 = new Promise((resolve, reject) => {
+    setTimeout(() => {
+        console.log("I am resolved - 2");
+    }, 3000);
 });
 
-
-// all other routes will respond with 404
-app.get('*', (req, res) => {
-    res.status(404).send('Not found!');
+const myPromise3 = new Promise((resolve, reject) => {
+    reject('I am rejected!');
 });
 
-app.listen(3000, () => console.log('Server has started'));
+// single promise //
+// promise.then(res => console.log(res));
+
+// promise all //
+// Promise.all([myPromise1, myPromise2, myPromise3]).then(res => {
+//     console.log({ res });
+// })
+
+// promise settle all //
+Promise.allSettled([myPromise1, myPromise2, myPromise3]).then(all => {
+    all.forEach(each => console.log({ each }))
+})
+
+const myObserver = new rxjs.Observable(observer => {
+    setTimeout(() => {
+        console.log('hi')
+        console.log('hello')
+        console.log('hey')
+    }, 1000);
+});
+
+myObserver.subscribe(res => console.log(res));
+
