@@ -150,7 +150,7 @@ app.get('/I/want/titler', async (req, res) => {
                     <body>
                         <h1> Following are the titles of given websites: </h1>
                         <ul>
-                            <li>${value.map(each => scrapeTitle(each.data))}</li>
+                            ${value.map(each => `<li>${scrapeTitle(each.data)}</li>`)}
                         </ul>
                     </body>
                     </html>
